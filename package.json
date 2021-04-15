@@ -1,0 +1,28 @@
+{
+  "name": "runtime-types",
+  "version": "1.0.0",
+  "description": "brings type info to runtime",
+  "main": "index.js",
+  "author": "lxgreen <alxgreen@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "watch": "./node_modules/.bin/nodemon --exec ./node_modules/.bin/ts-node index.ts"
+  },
+  "dependencies": {
+    "fp-ts": "^2.10.0",
+    "globby": "^11.0.3",
+    "lodash": "^4.17.21",
+    "ricos-schema": "^8.29.11",
+    "typeonly": "^0.4.4"
+  },
+  "devDependencies": {
+    "@tsconfig/node12": "^1.0.7",
+    "@types/lodash": "^4.14.168",
+    "@types/node": "^14.14.37",
+    "@types/nodemon": "^1.19.0",
+    "nodemon": "^2.0.7",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.4"
+  }
+}
