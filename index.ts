@@ -5,6 +5,7 @@ import * as T from "fp-ts/lib/Task";
 import { join } from "lodash/fp";
 import { pipe } from "fp-ts/lib/function";
 import { generateRtoModules, RtoModules } from "typeonly";
+import { inspect } from "util";
 
 import {
   getTypingFileList,
@@ -41,23 +42,23 @@ async function run() {
       E.toError
     );
 
-  const preprocessTypes = pipe(
+  const generateTypeDescriptors = pipe(
     getTypingFileList(TYPES_DIR_GLOB),
     TE.chain((paths) =>
       A.array.traverse(TE.taskEither)(paths, getFileContents)
     ),
     TE.map(A.map(purifyTypes)),
-    TE.map(join("\n")),
+    TE.map((types) => join("\n", types)),
     TE.chain(writeContentToFile(SAFE_TYPES_PATH)),
-    TE.chain(generateRto)
-    // TE.fold(
-    //   (e) => T.of(`error occurred: ${e.message}`),
-    //   (modules) => T.of(modules)
-    // )
+    TE.chain(generateRto),
+    TE.fold(
+      (e) => T.of(`error: ${e.message}`),
+      (modules) => T.of(JSON.stringify(modules))
+    )
   );
 
-  const files = await preprocessTypes();
-  console.log(files);
+  const modules = await generateTypeDescriptors();
+  console.dir(modules);
 }
 
 run();
