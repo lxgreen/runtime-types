@@ -3,6 +3,11 @@ import * as O from "fp-ts/lib/Option";
 import { flow, pipe } from "fp-ts/lib/function";
 import { compact, split, replace, join } from "lodash/fp";
 
+const log = (label: string) => <T>(data: T): T => {
+  console.log(label);
+  console.dir(data);
+  return data;
+};
 const toLines = split("\n");
 const mergeLines = join("\n");
 const toUnion = join(" | ");
@@ -56,10 +61,13 @@ const removeConvertors = remove(
   /const \w+: \{\n\s*fromJSON\(.*\): \w+;\n\s*toJSON\(.*\): unknown;\n\s*\};/gm
 );
 
+const fixEmptyTypes = replace(/\{\n\}/gm, "{\n\tdummy?: boolean;\n}");
+
 export const purifyTypes = flow(
   filterUnsupportedKeywords,
   enumToUnion,
   removeConvertors,
+  fixEmptyTypes,
   toLines,
   compact,
   mergeLines
