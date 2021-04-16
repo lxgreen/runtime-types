@@ -7,7 +7,7 @@ const toLines = split("\n");
 const mergeLines = join("\n");
 const toUnion = join(" | ");
 const toLiteral = replace(/\s*\w* = ("\w+"),?/g, "$1");
-const remove = (removed: string) => replace(removed, "");
+const remove = (removed: string | RegExp) => replace(removed, "");
 const linesWith = (filtered: string) => (line: string) =>
   !line.includes(filtered);
 
@@ -15,11 +15,15 @@ const filterUnsupportedKeywords = (content: string) =>
   pipe(
     content,
     toLines,
-    A.filter(linesWith(" function ")),
+    A.filter(linesWith("function ")),
     A.filter(linesWith("sourceMappingURL=")),
-    A.map(remove("declare ")),
-    A.map(remove("export ")),
-    mergeLines
+    A.filter(linesWith(" *")),
+    A.filter(linesWith("/**")),
+    A.filter(linesWith("*/")),
+    A.filter(linesWith("import ")),
+    mergeLines,
+    remove(/declare /gm),
+    remove(/export /gm)
   );
 
 const getEnumData = (
@@ -39,13 +43,24 @@ const getEnumData = (
     )
   );
 
-const enumToUnion = (typing: string) => {
+const enumToUnion = (content: string) => {
   const ENUM_REGEX = /const enum (.+) \{((?:\n\s*\w+ = "\w+",?)+)\n\}/gm;
-  const getMatches = ENUM_REGEX.exec.bind(ENUM_REGEX, typing);
+  const getMatches = ENUM_REGEX.exec.bind(ENUM_REGEX, content);
   return getEnumData(getMatches).reduce(
-    (typing, { name, union }) => typing.replace(name, union),
-    typing.replace(ENUM_REGEX, "")
+    (content, { name, union }) => content.replace(name, union),
+    content.replace(ENUM_REGEX, "")
   );
 };
 
-export const purifyTypes = flow(filterUnsupportedKeywords, enumToUnion);
+const removeConvertors = remove(
+  /const \w+: \{\n\s*fromJSON\(.*\): \w+;\n\s*toJSON\(.*\): unknown;\n\s*\};/gm
+);
+
+export const purifyTypes = flow(
+  filterUnsupportedKeywords,
+  enumToUnion,
+  removeConvertors,
+  toLines,
+  compact,
+  mergeLines
+);
